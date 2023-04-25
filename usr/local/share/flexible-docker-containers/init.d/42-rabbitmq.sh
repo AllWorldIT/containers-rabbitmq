@@ -75,3 +75,8 @@ fi
 
 # Enable RabbitMQ management plugin
 echo "[rabbitmq_management]." > /etc/rabbitmq/enabled_plugins
+
+# Check if IPv6 is enabled and enable listening
+if [ -n "$(ip -6 route show default)" ]; then
+	sed -i -e 's|#management.tcp.ip = ::|management.tcp.ip = ::|' /etc/rabbitmq/conf.d/10-defaults.conf
+fi

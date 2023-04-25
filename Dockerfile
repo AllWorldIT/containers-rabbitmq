@@ -141,8 +141,8 @@ RUN set -eux; \
 
 # RabbitMQ
 COPY etc/supervisor/conf.d/rabbitmq.conf /etc/supervisor/conf.d
-COPY etc/rabbitmq/10-defaults.conf /etc/rabbitmq/conf.d
-COPY etc/rabbitmq/50-import-definitions.conf /etc/rabbitmq/conf.d
+COPY etc/rabbitmq/conf.d/10-defaults.conf /etc/rabbitmq/conf.d
+COPY etc/rabbitmq/conf.d/50-import-definitions.conf /etc/rabbitmq/conf.d
 COPY usr/local/sbin/create-rabbitmq-definitions /usr/local/sbin
 COPY usr/local/share/flexible-docker-containers/healthcheck.d/42-rabbitmq.sh /usr/local/share/flexible-docker-containers/healthcheck.d
 COPY usr/local/share/flexible-docker-containers/init.d/42-rabbitmq.sh /usr/local/share/flexible-docker-containers/init.d
