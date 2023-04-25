@@ -1,0 +1,92 @@
+#!/bin/sh
+
+## This Source Code Form is subject to the terms of the Mozilla Public
+## License, v. 2.0. If a copy of the MPL was not distributed with this
+## file, You can obtain one at https://mozilla.org/MPL/2.0/.
+##
+## Copyright (c) 2018-2020 VMware, Inc. or its affiliates.  All rights reserved.
+## Copyright (c) 2022-2023 Conarx, Ltd.
+##
+
+SCRIPT="$(basename "$0")"
+
+main() {
+  ensure_we_are_in_a_readable_dir
+  if current_user_is_rabbitmq && calling_rabbitmq_server
+  then
+    exec_rabbitmq_server "$@"
+  elif current_user_is_rabbitmq && ! calling_rabbitmq_plugins
+  then
+    exec_script_as_rabbitmq "$@"
+  elif current_user_is_root && calling_rabbitmq_plugins
+  then
+    run_script_as_rabbitmq "$@"
+    _result="$?"
+    maybe_fixup_erlang_cookie
+    exit "$_result"
+  elif current_user_is_root
+  then
+    exec_script_as_root "$@"
+  else
+    run_script_help_and_fail
+  fi
+}
+
+maybe_fixup_erlang_cookie() {
+    # rabbitmq/rabbitmq-server-release#85
+    _rabbitmq_home="$(cd ~rabbitmq && pwd)"
+    _erlang_cookie="$_rabbitmq_home/.erlang.cookie"
+    if [ -f "$_erlang_cookie" ]
+    then
+        chown rabbitmq:rabbitmq "$_erlang_cookie"
+        chmod 400 "$_erlang_cookie"
+    fi
+}
+
+ensure_we_are_in_a_readable_dir() {
+  # shellcheck disable=SC2164
+  cd ~rabbitmq || cd /
+}
+
+current_user_is_rabbitmq() {
+  [ "$(id -un)" = "rabbitmq" ]
+}
+
+current_user_is_root() {
+  [ "$(id -u)" = 0 ]
+}
+
+calling_rabbitmq_server() {
+  [ "$SCRIPT" = "rabbitmq-server" ]
+}
+
+calling_rabbitmq_plugins() {
+  [ "$SCRIPT" = "rabbitmq-plugins" ]
+}
+
+exec_rabbitmq_server() {
+  exec /usr/lib/rabbitmq/bin/rabbitmq-server "$@"
+}
+
+run_script_as_rabbitmq() {
+  HOME="$(cd ~rabbitmq && pwd)" "/usr/local/lib/rabbitmq/bin/$SCRIPT" "$@"
+}
+
+exec_script_as_rabbitmq() {
+  HOME="$(cd ~rabbitmq && pwd)" exec "/usr/local/lib/rabbitmq/bin/$SCRIPT" "$@"
+}
+
+exec_script_as_root() {
+	exec sudo -u rabbitmq -- "/usr/local/lib/rabbitmq/bin/$SCRIPT" "$@"
+}
+
+run_script_help_and_fail() {
+  "/usr/local/lib/rabbitmq/bin/$SCRIPT" help
+
+  echo "
+Only root or rabbitmq can run $SCRIPT
+"
+  exit 1
+}
+
+main "$@"
