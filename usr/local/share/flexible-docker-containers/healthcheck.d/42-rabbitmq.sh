@@ -20,13 +20,13 @@
 # IN THE SOFTWARE.
 
 
-rabbitmq-diagnostics check_running
+sudo -u rabbitmq -- rabbitmq-diagnostics check_running
 
-rabbitmq-diagnostics check_local_alarms
+sudo -u rabbitmq -- rabbitmq-diagnostics check_local_alarms
 
 
 # Check we get a positive response back when using IPv4
-if ! rabbitmq-diagnostics check_port_connectivity --address 127.0.0.1; then
+if ! sudo -u rabbitmq -- rabbitmq-diagnostics check_port_connectivity --address 127.0.0.1; then
 	fdc_error "Health check failed for RabbitMQ using IPv4"
 	false
 fi
@@ -39,7 +39,7 @@ fi
 
 
 # Check we get a positive response back when using IPv6
-if ! rabbitmq-diagnostics check_port_connectivity --address ::1; then
+if ! sudo -u rabbitmq -- rabbitmq-diagnostics check_port_connectivity --address ::1; then
 	fdc_error "Health check failed for RabbitMQ using IPv6"
 	false
 fi
