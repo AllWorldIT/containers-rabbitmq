@@ -86,17 +86,17 @@ RUN set -eux; \
 	[ ! -e "/var/lib/.erlang.cookie" ]; \
 	# Create user for testing below
 	addgroup -S rabbitmq 2>/dev/null; \
-	adduser -S -D -H -h /var/lib/rabbitmq -G rabbitmq -g rabbitmq rabbitmq; \
+	adduser -S -D -H -h /var/lib/rabbitmq -s /bin/sh -G rabbitmq -g rabbitmq rabbitmq; \
 	# Temporarily create /var/lib/rabbitmq for the tests below; \
 	mkdir /var/lib/rabbitmq; \
 	chown root:rabbitmq /var/lib/rabbitmq; \
 	chmod 770 /var/lib/rabbitmq; \
 	# Ensure RabbitMQ was installed correctly by running a few commands that do not depend on a running server, as the rabbitmq user
 	# If they all succeed, it's safe to assume that things have been set up correctly
-	su-exec rabbitmq /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqctl help; \
-	su-exec rabbitmq /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqctl list_ciphers; \
-	su-exec rabbitmq /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmq-plugins list; \
-	su-exec rabbitmq /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqadmin help
+	runuser -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqctl help; \
+	runuser -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqctl list_ciphers; \
+	runuser -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmq-plugins list; \
+	runuser -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqadmin help
 
 RUN set -eux; \
 	cd build/rabbitmq-root; \
@@ -128,8 +128,8 @@ RUN set -eux; \
 	true "RabbitMQ depedencies"; \
 	apk add --no-cache \
 		erlang \
-		runuser \
-		shadow; \
+		shadow \
+		runuser; \
 	true "User setup"; \
 	addgroup -S rabbitmq 2>/dev/null; \
 	adduser -S -D -H -h /var/lib/rabbitmq -s /bin/nologin -G rabbitmq -g rabbitmq rabbitmq; \
