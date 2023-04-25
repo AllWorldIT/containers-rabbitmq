@@ -1,0 +1,93 @@
+#!/usr/bin/python
+# Copyright (c) 2022-2023, AllWorldIT.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
+from typing import Any
+import os
+import os.path
+import json
+import hashlib
+import base64
+
+
+DEFINITION_FILE = "/etc/rabbitmq/definitions.d/50-fdc-init.json"
+
+
+def hash_password(password: str) -> str:
+    """Hash password."""
+    salt = os.urandom(4)
+    salt_and_password = salt + password.encode("UTF-8")
+    salted_sha256 = hashlib.sha256(salt_and_password).digest()
+    salted_hash = salt + salted_sha256
+    return base64.b64encode(salted_hash).decode("UTF-8")
+
+
+#
+# Configuration
+#
+
+# Initialize our rabbitmq configuration structure
+rabbitmq_config: dict[str, Any] = {
+    "users": [],
+    "permissions": [],
+    "vhosts": [{"limits": [], "metadata": {"description": "Default virtual host", "tags": []}, "name": "/"}],
+}
+
+rabbitmq_admin_username = os.getenv("RABBITMQ_ADMIN_USERNAME", None)
+rabbitmq_admin_password = os.getenv("RABBITMQ_ADMIN_PASSWORD", None)
+
+rabbitmq_username = os.getenv("RABBITMQ_USERNAME", None)
+rabbitmq_password = os.getenv("RABBITMQ_PASSWORD", None)
+
+# Only output configuration if both the usernamesand passwords were provided
+if rabbitmq_admin_username and rabbitmq_admin_password:
+    rabbitmq_config["users"].append(
+        {
+            "name": rabbitmq_admin_username,
+            "password_hash": hash_password(rabbitmq_admin_password),
+            "hashing_algorithm": "rabbit_password_hashing_sha256",
+            "tags": ["administrator"],
+        }
+    )
+    rabbitmq_config["permissions"].append(
+        {"user": rabbitmq_admin_username, "vhost": "/", "configure": ".*", "read": ".*", "write": ".*"},
+    )
+if rabbitmq_username and rabbitmq_password:
+    rabbitmq_config["users"].append(
+        {
+            "name": rabbitmq_username,
+            "password_hash": hash_password(rabbitmq_password),
+            "hashing_algorithm": "rabbit_password_hashing_sha256",
+            "tags": [],
+        }
+    )
+    rabbitmq_config["permissions"].append(
+        {"user": rabbitmq_username, "vhost": "/", "configure": ".*", "read": ".*", "write": ".*"},
+    )
+
+
+#
+# Config file generation
+#
+
+if not os.path.isfile(DEFINITION_FILE):
+    # Write out Docker daemon configuration
+    with open(DEFINITION_FILE, "w", encoding="UTF-8") as dfile:
+        dfile.write(json.dumps(rabbitmq_config, sort_keys=True, indent=4) + "\n")
