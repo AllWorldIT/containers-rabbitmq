@@ -44,11 +44,15 @@ RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-}
 # shellcheck disable=SC2034
 RABBITMQ_MNESIA_DIR="mnesia"
 
-# Enable IPv6
-# shellcheck disable=SC2034
-RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS="-proto_dist inet6_tcp"
-# shellcheck disable=SC2034
-RABBITMQ_CTL_ERL_ARGS="-proto_dist inet6_tcp"
+
+# Check if IPv6 is enabled and enable listening
+if [ -n "$(ip -6 route show default)" ]; then
+	sed -i -e 's|#management.tcp.ip = ::|management.tcp.ip = ::|' /etc/rabbitmq/conf.d/10-defaults.conf
+	# shellcheck disable=SC2034
+	RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS="-proto_dist inet6_tcp"
+	# shellcheck disable=SC2034
+	RABBITMQ_CTL_ERL_ARGS="-proto_dist inet6_tcp"
+fi
 
 
 # Write out environment and fix perms of the config file
@@ -75,8 +79,3 @@ fi
 
 # Enable RabbitMQ management plugin
 echo "[rabbitmq_management]." > /etc/rabbitmq/enabled_plugins
-
-# Check if IPv6 is enabled and enable listening
-if [ -n "$(ip -6 route show default)" ]; then
-	sed -i -e 's|#management.tcp.ip = ::|management.tcp.ip = ::|' /etc/rabbitmq/conf.d/10-defaults.conf
-fi
