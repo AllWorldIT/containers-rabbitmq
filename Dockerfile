@@ -23,6 +23,9 @@ FROM registry.conarx.tech/containers/alpine/3.17 as builder
 
 ENV RABBITMQ_VER=3.11.13
 
+
+COPY usr/local/sbin/rabbitmq-script-wrapper /build/scripts/
+
 # Install libs we need
 # ref https://github.com/archlinux/svntogit-community/blob/packages/rabbitmq/trunk/PKGBUILD
 RUN set -eux; \
@@ -36,7 +39,7 @@ RUN set -eux; \
 		curl \
 		git \
 		rsync \
-		runuser
+		sudo
 
 # Download packages
 RUN set -eux; \
@@ -53,8 +56,6 @@ RUN set -eux; \
 	sed -E 's|^(SYS_PREFIX=).*$|\1|' -i deps/rabbit/scripts/rabbitmq-defaults; \
 	grep -qE 'SYS_PREFIX=' "deps/rabbit/scripts/rabbitmq-defaults"; \
 	sed -e "s|%%VSN%%|$RABBITMQ_VER|" -i deps/rabbitmq_management/bin/rabbitmqadmin; \
-	sed -e "s|@RABBITMQ_USER@|rabbitmq|" -i scripts/rabbitmq-script-wrapper; \
-	sed -e "s|@RABBITMQ_GROUP@|rabbitmq|" -i scripts/rabbitmq-script-wrapper; \
 	sed -e "s|/usr/|/usr/local/|" -i scripts/rabbitmq-script-wrapper; \
 	\
 	true "Build RabbitMQ..."; \
@@ -75,7 +76,7 @@ RUN set -eux; \
 	RABBITMQ_LIBDIR="$RABBITMQ_ROOT/lib/rabbitmq/lib/rabbitmq_server-$RABBITMQ_VER"; \
 	RABBITMQ_MANAGEMENT_DIR="$RABBITMQ_LIBDIR/plugins/rabbitmq_management-$RABBITMQ_VER"; \
 	install -d "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/sbin"; \
-	install -Dm 755 scripts/rabbitmq-script-wrapper -t "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/sbin"; \
+	install -Dm 755 ../scripts/rabbitmq-script-wrapper -t "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/sbin"; \
 	install -m 755 "$RABBITMQ_DESTDIR/$RABBITMQ_MANAGEMENT_DIR/priv/www/cli/rabbitmqadmin" "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/bin/rabbitmqadmin"; \
 	for script in "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/bin/rabbit"*; do \
 		ln -sv \
@@ -93,10 +94,10 @@ RUN set -eux; \
 	chmod 770 /var/lib/rabbitmq; \
 	# Ensure RabbitMQ was installed correctly by running a few commands that do not depend on a running server, as the rabbitmq user
 	# If they all succeed, it's safe to assume that things have been set up correctly
-	runuser -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqctl help; \
-	runuser -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqctl list_ciphers; \
-	runuser -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmq-plugins list; \
-	runuser -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqadmin help
+	sudo -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqctl help; \
+	sudo -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqctl list_ciphers; \
+	sudo -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmq-plugins list; \
+	sudo -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqadmin help
 
 RUN set -eux; \
 	cd build/rabbitmq-root; \
@@ -128,15 +129,16 @@ RUN set -eux; \
 	true "RabbitMQ depedencies"; \
 	apk add --no-cache \
 		erlang \
-		shadow \
-		runuser; \
+		sudo; \
 	true "User setup"; \
 	addgroup -S rabbitmq 2>/dev/null; \
 	adduser -S -D -H -h /var/lib/rabbitmq -s /bin/nologin -G rabbitmq -g rabbitmq rabbitmq; \
 	true "Cleanup"; \
 	rm -f /var/cache/apk/*; \
 	# Make sure any stale cookie is deleted
-	rm -f "/var/lib/rabbitmq/.erlang.cookie"
+	rm -f "/var/lib/rabbitmq/.erlang.cookie"; \
+	# Disable  syslog
+	rm -f "/etc/supervisor/conf.d/syslog-ng.conf"
 
 
 # RabbitMQ
@@ -144,6 +146,7 @@ COPY etc/supervisor/conf.d/rabbitmq.conf /etc/supervisor/conf.d
 COPY etc/rabbitmq/conf.d/10-defaults.conf /etc/rabbitmq/conf.d
 COPY etc/rabbitmq/conf.d/50-import-definitions.conf /etc/rabbitmq/conf.d
 COPY usr/local/sbin/create-rabbitmq-definitions /usr/local/sbin
+COPY usr/local/sbin/rabbitmq-script-wrapper /usr/local/sbin
 COPY usr/local/share/flexible-docker-containers/healthcheck.d/42-rabbitmq.sh /usr/local/share/flexible-docker-containers/healthcheck.d
 COPY usr/local/share/flexible-docker-containers/init.d/42-rabbitmq.sh /usr/local/share/flexible-docker-containers/init.d
 COPY usr/local/share/flexible-docker-containers/pre-init-tests.d/42-rabbitmq.sh /usr/local/share/flexible-docker-containers/pre-init-tests.d
