@@ -21,7 +21,7 @@
 
 FROM registry.conarx.tech/containers/alpine/3.17 as builder
 
-ENV RABBITMQ_VER=3.11.13
+ENV RABBITMQ_VER=3.11.14
 
 
 COPY usr/local/sbin/rabbitmq-script-wrapper /build/scripts/
