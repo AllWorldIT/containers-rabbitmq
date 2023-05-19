@@ -19,7 +19,7 @@
 # IN THE SOFTWARE.
 
 
-FROM registry.conarx.tech/containers/alpine/edge as builder
+FROM registry.conarx.tech/containers/alpine/3.18 as builder
 
 ENV RABBITMQ_VER=3.11.16
 
@@ -111,13 +111,13 @@ RUN set -eux; \
 
 
 
-FROM registry.conarx.tech/containers/alpine/edge
+FROM registry.conarx.tech/containers/alpine/3.18
 
 
 ARG VERSION_INFO=
 LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "edge"
-LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/edge"
+LABEL org.opencontainers.image.version   "3.18"
+LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.18"
 
 # NK: things need to run with UTF-8 to prevent weirdness
 ENV LANG=C.UTF-8 LANGUAGE=C.UTF-8 LC_ALL=C.UTF-8
