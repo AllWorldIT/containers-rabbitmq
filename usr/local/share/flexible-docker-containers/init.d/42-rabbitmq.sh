@@ -42,7 +42,7 @@ RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-}
 
 # Set database directory name so it doesn't get changed when our hostname changes (Docker)
 # shellcheck disable=SC2034
-RABBITMQ_MNESIA_DIR="mnesia"
+RABBITMQ_MNESIA_DIR="/var/lib/rabbitmq/mnesia"
 
 
 # Check if IPv6 is enabled and enable listening
