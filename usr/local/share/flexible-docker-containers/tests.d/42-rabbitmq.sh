@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2022-2023, AllWorldIT.
+# Copyright (c) 2022-2024, AllWorldIT.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -18,6 +18,31 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+
+
+# Function to wait for database startup
+function wait_for_startup() {
+	for i in {30..0}; do
+		got_value=$(sudo -u rabbitmq -- rabbitmq-diagnostics check_running 2>&1) || true
+		fdc_test_progress rabbitmq "Got\n$got_value"
+		if echo "$got_value" | grep "fully booted and running"; then
+			break
+		fi
+		fdc_test_progress rabbitmq "Waiting for RabbitMQ start... ${i}s"
+		sleep 1
+	done
+	if [ "$i" = 0 ]; then
+		fdc_test_fail rabbitmq "RabbitMQ start failed!"
+		return 1
+	fi
+	return
+}
+
+
+# Wait for rabbitmq startup
+echo fdc_test_start rabbitmq "Wait for startup"
+wait_for_startup
+echo fdc_test_pass rabbitmq "RabbitMQ started"
 
 
 fdc_test_start rabbitmq "Checking RabbitMQ responds to admin creating queue over IPv4"
