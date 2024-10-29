@@ -76,7 +76,6 @@ RUN set -eux; \
 	RABBITMQ_LIBDIR="$RABBITMQ_ROOT/lib/rabbitmq/lib/rabbitmq_server-$RABBITMQ_VER"; \
 	RABBITMQ_MANAGEMENT_DIR="$RABBITMQ_LIBDIR/plugins/rabbitmq_management-0.0.0"; \
 	install -d "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/sbin"; \
-	find "$RABBITMQ_DESTDIR" | grep admin; \
 	install -Dm 755 ../scripts/rabbitmq-script-wrapper -t "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/sbin"; \
 	install -m 755 "$RABBITMQ_DESTDIR/$RABBITMQ_MANAGEMENT_DIR/priv/www/cli/rabbitmqadmin" "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/bin/rabbitmqadmin"; \
 	for script in "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/bin/rabbit"*; do \
