@@ -21,7 +21,7 @@
 
 FROM registry.conarx.tech/containers/alpine/edge as builder
 
-ENV RABBITMQ_VER=3.12.13
+ENV RABBITMQ_VER=4.0.3
 
 
 COPY usr/local/sbin/rabbitmq-script-wrapper /build/scripts/
@@ -74,8 +74,9 @@ RUN set -eux; \
 	mkdir -p "$RABBITMQ_DESTDIR/etc/rabbitmq/definitions.d"; \
 	# Use script wrapper for better bin handling
 	RABBITMQ_LIBDIR="$RABBITMQ_ROOT/lib/rabbitmq/lib/rabbitmq_server-$RABBITMQ_VER"; \
-	RABBITMQ_MANAGEMENT_DIR="$RABBITMQ_LIBDIR/plugins/rabbitmq_management-$RABBITMQ_VER"; \
+	RABBITMQ_MANAGEMENT_DIR="$RABBITMQ_LIBDIR/plugins/rabbitmq_management-0.0.0"; \
 	install -d "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/sbin"; \
+	find "$RABBITMQ_DESTDIR" | grep admin; \
 	install -Dm 755 ../scripts/rabbitmq-script-wrapper -t "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/sbin"; \
 	install -m 755 "$RABBITMQ_DESTDIR/$RABBITMQ_MANAGEMENT_DIR/priv/www/cli/rabbitmqadmin" "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/bin/rabbitmqadmin"; \
 	for script in "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/bin/rabbit"*; do \
