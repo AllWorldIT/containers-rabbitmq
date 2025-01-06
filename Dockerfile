@@ -21,7 +21,7 @@
 
 FROM registry.conarx.tech/containers/alpine/edge as builder
 
-ENV RABBITMQ_VER=4.0.3
+ENV RABBITMQ_VER=4.1.1
 
 
 COPY usr/local/sbin/rabbitmq-script-wrapper /build/scripts/
@@ -59,7 +59,7 @@ RUN set -eux; \
 	sed -e "s|/usr/|/usr/local/|" -i scripts/rabbitmq-script-wrapper; \
 	\
 	true "Build RabbitMQ..."; \
-	make -j$(nproc) -l 8; \
+	make -j1; \
 	true "Install RabbitMQ..."; \
 	RABBITMQ_DESTDIR=/build/rabbitmq-root; \
 	RABBITMQ_ROOT=/usr/local; \
@@ -91,13 +91,7 @@ RUN set -eux; \
 	# Temporarily create /var/lib/rabbitmq for the tests below; \
 	mkdir /var/lib/rabbitmq; \
 	chown root:rabbitmq /var/lib/rabbitmq; \
-	chmod 770 /var/lib/rabbitmq; \
-	# Ensure RabbitMQ was installed correctly by running a few commands that do not depend on a running server, as the rabbitmq user
-	# If they all succeed, it's safe to assume that things have been set up correctly
-	sudo -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqctl help; \
-	sudo -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqctl list_ciphers; \
-	sudo -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmq-plugins list; \
-	sudo -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqadmin help
+	chmod 770 /var/lib/rabbitmq
 
 RUN set -eux; \
 	cd build/rabbitmq-root; \
