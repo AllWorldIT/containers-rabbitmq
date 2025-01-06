@@ -115,9 +115,9 @@ FROM registry.conarx.tech/containers/alpine/edge
 
 
 ARG VERSION_INFO=
-LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "edge"
-LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/edge"
+LABEL org.opencontainers.image.authors   = "Nigel Kukard <nkukard@conarx.tech>"
+LABEL org.opencontainers.image.version   = "edge"
+LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpine/edge"
 
 # NK: things need to run with UTF-8 to prevent weirdness
 ENV LANG=C.UTF-8 LANGUAGE=C.UTF-8 LC_ALL=C.UTF-8
