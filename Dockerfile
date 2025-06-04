@@ -36,6 +36,7 @@ RUN set -eux; \
 		gawk \
 		erlang \
 		elixir \
+		7zip \
 		curl \
 		git \
 		rsync \
