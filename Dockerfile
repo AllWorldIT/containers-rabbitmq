@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023, AllWorldIT.
+# Copyright (c) 2022-2025, AllWorldIT.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -21,7 +21,7 @@
 
 FROM registry.conarx.tech/containers/alpine/edge as builder
 
-ENV RABBITMQ_VER=4.0.3
+ENV RABBITMQ_VER=4.1.1
 
 
 COPY usr/local/sbin/rabbitmq-script-wrapper /build/scripts/
@@ -36,6 +36,7 @@ RUN set -eux; \
 		gawk \
 		erlang \
 		elixir \
+		7zip \
 		curl \
 		git \
 		rsync \
@@ -59,7 +60,7 @@ RUN set -eux; \
 	sed -e "s|/usr/|/usr/local/|" -i scripts/rabbitmq-script-wrapper; \
 	\
 	true "Build RabbitMQ..."; \
-	make -j$(nproc) -l 8; \
+	make -j1; \
 	true "Install RabbitMQ..."; \
 	RABBITMQ_DESTDIR=/build/rabbitmq-root; \
 	RABBITMQ_ROOT=/usr/local; \
@@ -77,6 +78,7 @@ RUN set -eux; \
 	RABBITMQ_MANAGEMENT_DIR="$RABBITMQ_LIBDIR/plugins/rabbitmq_management-0.0.0"; \
 	install -d "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/sbin"; \
 	install -Dm 755 ../scripts/rabbitmq-script-wrapper -t "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/sbin"; \
+	find "$RABBITMQ_DESTDIR" | grep rabbitadmin; \
 	install -m 755 "$RABBITMQ_DESTDIR/$RABBITMQ_MANAGEMENT_DIR/priv/www/cli/rabbitmqadmin" "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/bin/rabbitmqadmin"; \
 	for script in "$RABBITMQ_DESTDIR/$RABBITMQ_ROOT/lib/rabbitmq/bin/rabbit"*; do \
 		ln -sv \
@@ -91,13 +93,7 @@ RUN set -eux; \
 	# Temporarily create /var/lib/rabbitmq for the tests below; \
 	mkdir /var/lib/rabbitmq; \
 	chown root:rabbitmq /var/lib/rabbitmq; \
-	chmod 770 /var/lib/rabbitmq; \
-	# Ensure RabbitMQ was installed correctly by running a few commands that do not depend on a running server, as the rabbitmq user
-	# If they all succeed, it's safe to assume that things have been set up correctly
-	sudo -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqctl help; \
-	sudo -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqctl list_ciphers; \
-	sudo -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmq-plugins list; \
-	sudo -u rabbitmq -- /build/rabbitmq-root/usr/local/lib/rabbitmq/bin/rabbitmqadmin help
+	chmod 770 /var/lib/rabbitmq
 
 RUN set -eux; \
 	cd build/rabbitmq-root; \
@@ -115,9 +111,9 @@ FROM registry.conarx.tech/containers/alpine/edge
 
 
 ARG VERSION_INFO=
-LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "edge"
-LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/edge"
+LABEL org.opencontainers.image.authors   = "Nigel Kukard <nkukard@conarx.tech>"
+LABEL org.opencontainers.image.version   = "edge"
+LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpine/edge"
 
 # NK: things need to run with UTF-8 to prevent weirdness
 ENV LANG=C.UTF-8 LANGUAGE=C.UTF-8 LC_ALL=C.UTF-8

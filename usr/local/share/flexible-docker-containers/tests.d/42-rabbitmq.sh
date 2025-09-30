@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2022-2024, AllWorldIT.
+# Copyright (c) 2022-2025, AllWorldIT.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -38,11 +38,24 @@ function wait_for_startup() {
 	return
 }
 
+# Ensure RabbitMQ was installed correctly by running a few commands that do not depend on a running server, as the rabbitmq user
+# If they all succeed, it's safe to assume that things have been set up correctly
+fdc_test_start rabbitmq "Testing RabbitMQ commands work"
+set +x
+sudo -u rabbitmq -- /usr/local/lib/rabbitmq/bin/rabbitmqctl help
+sudo -u rabbitmq -- /usr/local/lib/rabbitmq/bin/rabbitmqctl list_ciphers
+sudo -u rabbitmq -- /usr/local/lib/rabbitmq/bin/rabbitmq-plugins --help || :
+sudo -u rabbitmq -- /usr/local/lib/rabbitmq/bin/rabbitmq-plugins help || :
+sudo -u rabbitmq -- /usr/local/lib/rabbitmq/bin/rabbitmq-plugins directories || :
+sudo -u rabbitmq -- /usr/local/lib/rabbitmq/bin/rabbitmq-plugins list
+sudo -u rabbitmq -- /usr/local/lib/rabbitmq/bin/rabbitmqadmin help
+set -x
+fdc_test_pass rabbitmq "RabbitMQ commands work"
 
 # Wait for rabbitmq startup
-echo fdc_test_start rabbitmq "Wait for startup"
+fdc_test_start rabbitmq "Wait for startup"
 wait_for_startup
-echo fdc_test_pass rabbitmq "RabbitMQ started"
+fdc_test_pass rabbitmq "RabbitMQ started"
 
 
 fdc_test_start rabbitmq "Checking RabbitMQ responds to admin creating queue over IPv4"
